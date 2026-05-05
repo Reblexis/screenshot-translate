@@ -88,6 +88,9 @@ sst IMAGES... --to LANGUAGE [options]
                            name LookPilot in English".
   -j, --concurrency INT    Parallel API calls. Default: 4.
       --overwrite          Replace existing output files.
+      --lang-subdirs       Write to <out-dir>/<lang>/<stem>.png instead of
+                           <out-dir>/<stem>.<lang>.png. Cleaner for many
+                           languages.
       --api-key TEXT       Defaults to $OPENAI_API_KEY.
   -V, --version
   -h, --help

@@ -34,7 +34,8 @@ console = Console()
 
 LANG_SLUG = {
     "english": "en", "spanish": "es", "french": "fr", "german": "de",
-    "italian": "it", "portuguese": "pt", "dutch": "nl", "polish": "pl",
+    "italian": "it", "portuguese": "pt", "brazilian portuguese": "pt-br",
+    "european portuguese": "pt-pt", "dutch": "nl", "polish": "pl",
     "czech": "cs", "slovak": "sk", "russian": "ru", "ukrainian": "uk",
     "japanese": "ja", "korean": "ko", "chinese": "zh",
     "simplified chinese": "zh-cn", "traditional chinese": "zh-tw",
@@ -64,12 +65,19 @@ def parse_languages(values: Iterable[str]) -> List[str]:
     return out
 
 
-def output_path(source: Path, language: str, out_dir: Path | None) -> Path:
+def output_path(
+    source: Path,
+    language: str,
+    out_dir: Path | None,
+    lang_subdirs: bool = False,
+) -> Path:
     slug = language_slug(language)
-    target_dir = out_dir if out_dir else source.parent
+    base = out_dir if out_dir else source.parent
     # gpt-image-2 returns PNG bytes regardless of input format, so the
     # output is always .png even when the source is .jpg/.webp.
-    return target_dir / f"{source.stem}.{slug}.png"
+    if lang_subdirs:
+        return base / slug / f"{source.stem}.png"
+    return base / f"{source.stem}.{slug}.png"
 
 
 @click.command(
@@ -124,6 +132,11 @@ def output_path(source: Path, language: str, out_dir: Path | None) -> Path:
     help="Replace existing output files instead of skipping them.",
 )
 @click.option(
+    "--lang-subdirs/--no-lang-subdirs", default=False,
+    help="Write outputs to <out-dir>/<lang>/<stem>.png instead of "
+         "<out-dir>/<stem>.<lang>.png. Cleaner for many languages.",
+)
+@click.option(
     "--api-key", envvar="OPENAI_API_KEY", default=None,
     help="OpenAI API key. Defaults to $OPENAI_API_KEY.",
 )
@@ -138,6 +151,7 @@ def main(
     prompt_extra: str | None,
     concurrency: int,
     overwrite: bool,
+    lang_subdirs: bool,
     api_key: str | None,
 ):
     """Translate text inside screenshots to other languages with gpt-image-2.
@@ -159,7 +173,7 @@ def main(
     skipped = 0
     for img in images:
         for lang in langs:
-            target = output_path(img, lang, out_dir)
+            target = output_path(img, lang, out_dir, lang_subdirs=lang_subdirs)
             if target.exists() and not overwrite:
                 console.print(f"[yellow]skip[/yellow] {target} (exists)")
                 skipped += 1
