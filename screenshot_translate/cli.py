@@ -67,7 +67,9 @@ def parse_languages(values: Iterable[str]) -> List[str]:
 def output_path(source: Path, language: str, out_dir: Path | None) -> Path:
     slug = language_slug(language)
     target_dir = out_dir if out_dir else source.parent
-    return target_dir / f"{source.stem}.{slug}{source.suffix or '.png'}"
+    # gpt-image-2 returns PNG bytes regardless of input format, so the
+    # output is always .png even when the source is .jpg/.webp.
+    return target_dir / f"{source.stem}.{slug}.png"
 
 
 @click.command(
